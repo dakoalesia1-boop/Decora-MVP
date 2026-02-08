@@ -2,6 +2,10 @@
 
 import { useRouter } from "next/navigation";
 
+<p style={{ fontSize: 12, opacity: 0.6 }}>
+  Build version: seller-dashboard-v1
+</p>
+
 export default function RoleSelectPage() {
   const router = useRouter();
 
