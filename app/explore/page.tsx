@@ -1,41 +1,105 @@
+"use client";
+
 import Link from "next/link";
-import { furnitureItems } from "../data/furnitureData";
+import { furnitureItems } from "@/lib/furnitureData";
+import { getEndorsements } from "@/lib/endorsements";
 
 export default function ExplorePage() {
+  const endorsements = getEndorsements();
+
   return (
-    <div className="min-h-screen bg-[#f8f5f0] p-8">
-      <h1 className="text-3xl font-semibold mb-8 text-[#2f2f2f]">
+    <div
+      style={{
+        padding: 40,
+        minHeight: "100vh",
+        background: "#f8f5f0",
+        color: "#2f2f2f",
+      }}
+    >
+      <h1 style={{ fontSize: 32, fontWeight: 700 }}>
         Explore Designs
       </h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-        {furnitureItems.map((item) => (
-          <Link
-            key={item.id}
-            href={`/item/${item.id}`}
-            className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition"
-          >
-            <div className="relative">
-              <span className="absolute top-4 left-4 bg-[#f1ede6] text-[#2f2f2f] text-xs px-3 py-1 rounded-full">
-                ✔ Designer Endorsed
-              </span>
+      <div
+        style={{
+          marginTop: 30,
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fill, minmax(260px, 1fr))",
+          gap: 24,
+        }}
+      >
+        {furnitureItems.map((item) => {
+          const endorsement = endorsements[item.id];
+
+          return (
+            <Link
+              key={item.id}
+              href={`/item/${item.id}`}
+              style={{
+                position: "relative",
+                background: "white",
+                borderRadius: 16,
+                overflow: "hidden",
+                textDecoration: "none",
+                color: "inherit",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+              }}
+            >
+              {/* ✅ CONDITIONAL DESIGNER BADGE */}
+              {endorsement && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 12,
+                    left: 12,
+                    background: "#f1ede6",
+                    color: "#2f2f2f",
+                    fontSize: 12,
+                    padding: "4px 10px",
+                    borderRadius: 999,
+                    fontWeight: 600,
+                    zIndex: 2,
+                  }}
+                >
+                  ✔ Endorsed by{" "}
+                  {endorsement.designer.split(" — ")[0]}
+                </span>
+              )}
 
               <img
                 src={item.image}
                 alt={item.name}
-                className="w-full h-64 object-cover"
+                style={{
+                  width: "100%",
+                  height: 220,
+                  objectFit: "cover",
+                }}
               />
-            </div>
 
-            <div className="p-4">
-              <p className="font-medium text-[#2f2f2f]">{item.name}</p>
-              <p className="text-sm text-[#6b6b6b]">${item.price}</p>
-              <p className="text-xs text-[#8a8a8a]">
-                {item.style} • {item.type}
-              </p>
-            </div>
-          </Link>
-        ))}
+              <div style={{ padding: 16 }}>
+                <p
+                  style={{
+                    fontWeight: 600,
+                    fontSize: 16,
+                    marginBottom: 4,
+                  }}
+                >
+                  {item.name}
+                </p>
+
+                <p
+                  style={{
+                    fontSize: 14,
+                    color: "#6b6b6b",
+                  }}
+                >
+                  {item.style} · €{item.price}
+                </p>
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

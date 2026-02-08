@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { furnitureItems } from "../data/furnitureData";
+import { furnitureItems } from "../../lib/furnitureData";
 
 const styles = [
   "All",

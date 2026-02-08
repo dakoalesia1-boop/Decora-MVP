@@ -1,141 +1,136 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import type { FurnitureItem } from "@/lib/furnitureData";
 
-type SavedItem = {
-  id: number;
-  name: string;
-  image: string;
-};
+/* -------- TYPES -------- */
 
-type Board = {
-  id: number;
+export type Moodboard = {
+  id: string;
   name: string;
-  items: SavedItem[];
-  coverImage?: string;
+  items: FurnitureItem[];
 };
 
 type SavedContextType = {
-  boards: Board[];
-  saveToBoard: (boardId: number, item: SavedItem) => void;
-  createBoard: (name: string) => void;
-  deleteBoard: (boardId: number) => void;
-  moveItem: (itemId: number, fromBoardId: number, toBoardId: number) => void;
-  removeFromBoard: (boardId: number, itemId: number) => void;
+  moodboards: Moodboard[];
+  createMoodboard: (name: string) => void;
+  addItemToMoodboard: (boardId: string, item: FurnitureItem) => void;
+  moveItem: (
+    fromBoardId: string,
+    toBoardId: string,
+    itemId: string
+  ) => void;
+  deleteMoodboard: (boardId: string) => void;
 };
+
+/* -------- CONTEXT -------- */
 
 const SavedContext = createContext<SavedContextType | null>(null);
 
-export function SavedProvider({ children }: { children: React.ReactNode }) {
-  const [boards, setBoards] = useState<Board[]>([]);
+/* -------- PROVIDER -------- */
 
-  // Load boards
+export function SavedProvider({ children }: { children: React.ReactNode }) {
+  const [moodboards, setMoodboards] = useState<Moodboard[]>([]);
+
+  /* Load moodboards from localStorage */
   useEffect(() => {
-    const stored = localStorage.getItem("decora-boards");
+    if (typeof window === "undefined") return;
+
+    const stored = localStorage.getItem("decora-moodboards");
     if (stored) {
-      setBoards(JSON.parse(stored));
-    } else {
-      setBoards([
-        { id: 1, name: "Living Room", items: [] },
-        { id: 2, name: "Bedroom", items: [] },
-        { id: 3, name: "Inspiration", items: [] },
-      ]);
+      setMoodboards(JSON.parse(stored));
     }
   }, []);
 
-  // Persist boards
+  /* Persist moodboards to localStorage */
   useEffect(() => {
-    localStorage.setItem("decora-boards", JSON.stringify(boards));
-  }, [boards]);
+    if (typeof window === "undefined") return;
 
-  const saveToBoard = (boardId: number, item: SavedItem) => {
-    setBoards((prev) =>
-      prev.map((board) => {
-        if (board.id !== boardId) return board;
-        if (board.items.find((i) => i.id === item.id)) return board;
-
-        return {
-          ...board,
-          items: [...board.items, item],
-          coverImage: board.coverImage ?? item.image,
-        };
-      })
+    localStorage.setItem(
+      "decora-moodboards",
+      JSON.stringify(moodboards)
     );
-  };
+  }, [moodboards]);
 
-  const createBoard = (name: string) => {
-    setBoards((prev) => [
+  /* -------- ACTIONS -------- */
+
+  const createMoodboard = (name: string) => {
+    setMoodboards((prev) => [
       ...prev,
       {
-        id: Date.now(),
+        id: crypto.randomUUID(),
         name,
         items: [],
       },
     ]);
   };
 
-  const deleteBoard = (boardId: number) => {
-    setBoards((prev) => prev.filter((b) => b.id !== boardId));
-  };
-
-  const moveItem = (
-    itemId: number,
-    fromBoardId: number,
-    toBoardId: number
-  ) => {
-    setBoards((prev) => {
-      const item = prev
-        .find((b) => b.id === fromBoardId)
-        ?.items.find((i) => i.id === itemId);
-
-      if (!item) return prev;
-
-      return prev.map((board) => {
-        if (board.id === fromBoardId) {
-          return {
-            ...board,
-            items: board.items.filter((i) => i.id !== itemId),
-          };
-        }
-        if (board.id === toBoardId) {
-          return {
-            ...board,
-            items: [...board.items, item],
-            coverImage: board.coverImage ?? item.image,
-          };
-        }
-        return board;
-      });
-    });
-  };
-
-  const removeFromBoard = (boardId: number, itemId: number) => {
-    setBoards((prev) =>
+  const addItemToMoodboard = (boardId: string, item: FurnitureItem) => {
+    setMoodboards((prev) =>
       prev.map((board) => {
         if (board.id !== boardId) return board;
 
-        const updatedItems = board.items.filter(
-          (item) => item.id !== itemId
+        const exists = board.items.find(
+          (i) => i.id === item.id
         );
+        if (exists) return board;
 
         return {
           ...board,
-          items: updatedItems,
-          coverImage: updatedItems[0]?.image,
+          items: [...board.items, item],
         };
       })
     );
   };
 
+  const moveItem = (
+    fromBoardId: string,
+    toBoardId: string,
+    itemId: string
+  ) => {
+    let movedItem: FurnitureItem | null = null;
+
+    const withoutItem = moodboards.map((board) => {
+      if (board.id === fromBoardId) {
+        const remaining = board.items.filter((item) => {
+          if (item.id === itemId) {
+            movedItem = item;
+            return false;
+          }
+          return true;
+        });
+        return { ...board, items: remaining };
+      }
+      return board;
+    });
+
+    if (!movedItem) return;
+
+    setMoodboards(
+      withoutItem.map((board) =>
+        board.id === toBoardId
+          ? { ...board, items: [...board.items, movedItem!] }
+          : board
+      )
+    );
+  };
+
+  const deleteMoodboard = (boardId: string) => {
+    setMoodboards((prev) =>
+      prev.filter((board) => board.id !== boardId)
+    );
+  };
+
+  /* -------- PROVIDER -------- */
+
   return (
     <SavedContext.Provider
       value={{
-        boards,
-        saveToBoard,
-        createBoard,
-        deleteBoard,
+        moodboards,
+        createMoodboard,
+        addItemToMoodboard,
         moveItem,
-        removeFromBoard,
+        deleteMoodboard,
       }}
     >
       {children}
@@ -143,8 +138,14 @@ export function SavedProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+/* -------- HOOK -------- */
+
 export function useSaved() {
-  const ctx = useContext(SavedContext);
-  if (!ctx) throw new Error("useSaved must be used within SavedProvider");
-  return ctx;
+  const context = useContext(SavedContext);
+  if (!context) {
+    throw new Error(
+      "useSaved must be used within a SavedProvider"
+    );
+  }
+  return context;
 }

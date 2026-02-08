@@ -1,137 +1,182 @@
 "use client";
 
-import { useSaved } from "../context/SavedContext";
 import { useState } from "react";
+import Link from "next/link";
+import { useSaved } from "@/app/context/SavedContext";
 
 export default function SavedPage() {
   const {
-    boards,
-    createBoard,
-    deleteBoard,
+    moodboards,
+    createMoodboard,
     moveItem,
-    removeFromBoard,
+    deleteMoodboard,
   } = useSaved();
 
   const [newBoardName, setNewBoardName] = useState("");
+  const [dragged, setDragged] = useState<{
+    itemId: string;
+    fromBoardId: string;
+  } | null>(null);
 
   return (
-    <div className="min-h-screen bg-[#f8f5f0] p-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-10">
-        <h1 className="text-3xl font-semibold text-[#2f2f2f]">
-          Your Moodboards
-        </h1>
+    <div
+      style={{
+        padding: 40,
+        minHeight: "100vh",
+        background: "#f8f5f0",
+        color: "#2f2f2f",
+      }}
+    >
+      <h1 style={{ fontSize: 28, fontWeight: 700 }}>
+        Your Moodboards
+      </h1>
 
-        {/* Create board */}
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="New board name"
-            value={newBoardName}
-            onChange={(e) => setNewBoardName(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm"
-          />
-          <button
-            onClick={() => {
-              if (!newBoardName.trim()) return;
-              createBoard(newBoardName);
-              setNewBoardName("");
-            }}
-            className="bg-[#3b2f2a] text-white px-4 py-2 rounded-lg text-sm"
-          >
-            Create
-          </button>
-        </div>
+      {/* CREATE MOODBOARD */}
+      <div
+        style={{
+          marginTop: 20,
+          display: "flex",
+          gap: 8,
+          maxWidth: 420,
+        }}
+      >
+        <input
+          value={newBoardName}
+          onChange={(e) => setNewBoardName(e.target.value)}
+          placeholder="Create a new moodboard…"
+          style={{
+            flex: 1,
+            padding: "10px 12px",
+            borderRadius: 10,
+            border: "1px solid #ccc",
+            background: "white",
+          }}
+        />
+        <button
+          onClick={() => {
+            if (!newBoardName.trim()) return;
+            createMoodboard(newBoardName);
+            setNewBoardName("");
+          }}
+          style={primaryButton}
+        >
+          Create
+        </button>
       </div>
 
-      {/* Boards */}
-      <div className="space-y-14">
-        {boards.map((board) => (
+      {/* MOODBOARDS */}
+      <div style={{ marginTop: 40 }}>
+        {moodboards.map((board) => (
           <div
             key={board.id}
+            style={{ marginBottom: 50 }}
             onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              const itemId = Number(e.dataTransfer.getData("itemId"));
-              const fromBoard = Number(
-                e.dataTransfer.getData("fromBoard")
-              );
-              moveItem(itemId, fromBoard, board.id);
+            onDrop={() => {
+              if (
+                dragged &&
+                dragged.fromBoardId !== board.id
+              ) {
+                moveItem(
+                  dragged.fromBoardId,
+                  board.id,
+                  dragged.itemId
+                );
+                setDragged(null);
+              }
             }}
           >
-            {/* Board header */}
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-medium text-[#3b2f2a]">
+            {/* HEADER */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: 22,
+                  fontWeight: 600,
+                  color: "#3b2f2a",
+                }}
+              >
                 {board.name}
-                <span className="text-sm text-[#6b6b6b] ml-2">
-                  · {board.items.length} items
-                </span>
               </h2>
 
               <button
                 onClick={() => {
-                  if (
-                    confirm(
-                      `Delete the board "${board.name}"? This cannot be undone.`
-                    )
-                  ) {
-                    deleteBoard(board.id);
+                  const confirmDelete = confirm(
+                    `Delete the moodboard "${board.name}"?\nThis cannot be undone.`
+                  );
+                  if (confirmDelete) {
+                    deleteMoodboard(board.id);
                   }
                 }}
-                className="text-sm text-red-600 hover:underline"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "#b91c1c",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
               >
-                Delete board
+                Delete
               </button>
             </div>
 
-            {/* Cover image */}
-            {board.coverImage && (
-              <img
-                src={board.coverImage}
-                className="w-full h-48 object-cover rounded-xl mb-4"
-              />
-            )}
-
-            {/* Items */}
             {board.items.length === 0 ? (
-              <p className="text-[#6b6b6b]">
-                No designs saved yet.
+              <p style={{ marginTop: 10, color: "#6b6b6b" }}>
+                Drag items here
               </p>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    "repeat(auto-fill, minmax(220px, 1fr))",
+                  gap: 20,
+                  marginTop: 20,
+                }}
+              >
                 {board.items.map((item) => (
                   <div
                     key={item.id}
                     draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData(
-                        "itemId",
-                        String(item.id)
-                      );
-                      e.dataTransfer.setData(
-                        "fromBoard",
-                        String(board.id)
-                      );
+                    onDragStart={() =>
+                      setDragged({
+                        itemId: item.id,
+                        fromBoardId: board.id,
+                      })
+                    }
+                    style={{
+                      border: "1px solid #e5e5e5",
+                      borderRadius: 14,
+                      overflow: "hidden",
+                      background: "white",
+                      cursor: "grab",
+                      boxShadow:
+                        "0 2px 6px rgba(0,0,0,0.05)",
                     }}
-                    className="relative group"
                   >
-                    <img
-                      src={item.image}
-                      className="rounded-xl object-cover h-40 w-full cursor-move"
-                    />
-
-                    {/* Remove item */}
-                    <button
-                      onClick={() => {
-                        if (confirm("Remove this item from the board?")) {
-                          removeFromBoard(board.id, item.id);
-                        }
-                      }}
-                      className="absolute top-2 right-2 bg-white rounded-full w-7 h-7
-                                 flex items-center justify-center text-[#3b2f2a]
-                                 opacity-0 group-hover:opacity-100 transition shadow"
-                    >
-                      ×
-                    </button>
+                    <Link href={`/item/${item.id}`}>
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        style={{
+                          width: "100%",
+                          height: 180,
+                          objectFit: "cover",
+                        }}
+                      />
+                    </Link>
+                    <div style={{ padding: 12 }}>
+                      <p style={{ fontWeight: 600 }}>
+                        {item.name}
+                      </p>
+                      <p style={{ fontSize: 14, color: "#6b6b6b" }}>
+                        €{item.price}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -142,3 +187,15 @@ export default function SavedPage() {
     </div>
   );
 }
+
+/* ---------- STYLES ---------- */
+
+const primaryButton = {
+  padding: "10px 16px",
+  borderRadius: 10,
+  background: "#3b2f2a",
+  color: "white",
+  fontWeight: 600,
+  border: "none",
+  cursor: "pointer",
+};
