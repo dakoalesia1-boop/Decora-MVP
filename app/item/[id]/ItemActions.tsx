@@ -23,10 +23,10 @@ export default function ItemActions({ item }: Props) {
   /* 🔑 CLIENT-ONLY: read endorsements */
   useEffect(() => {
     const endorsements = getEndorsements();
-    const endorsement = endorsements[item.id];
+    const endorsement = endorsements[String(item.id)];
 
     if (endorsement) {
-      const [name] = endorsement.designer.split(" — ");
+      const [name] = endorsement.designerName;
       setDesignerName(name);
     }
   }, [item.id]);
