@@ -143,7 +143,7 @@ export default function SearchPage() {
                     zIndex: 2,
                   }}
                 >
-                  ✔ Endorsed by{"endorsment.designerName"}
+                  ✔ Endorsed by {endorsement.designerName}
                 </span>
               )}
 

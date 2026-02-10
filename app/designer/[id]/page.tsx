@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { furnitureItems } from "@/lib/furnitureData";
-import { getEndorsements } from "@/lib/endorsements";
+import { useProducts } from "@/app/context/ProductContext";
+import { getEndorsements, type Endorsement } from "@/lib/endorsements";
 
 function normalize(value: string) {
   return value.trim().toLowerCase();
@@ -12,12 +12,8 @@ function normalize(value: string) {
 
 export default function DesignerProfilePage() {
   const params = useParams();
+  const rawId = Array.isArray(params.id) ? params.id[0] : params.id;
 
-  const rawId = Array.isArray(params.id)
-    ? params.id[0]
-    : params.id;
-
-  // ✅ Type-safe guard (fixes TS error)
   if (!rawId) {
     return (
       <div style={{ padding: 40 }}>
@@ -28,37 +24,33 @@ export default function DesignerProfilePage() {
     );
   }
 
-  const designerName = normalize(
-    decodeURIComponent(rawId)
-  );
+  const designerName = normalize(decodeURIComponent(rawId));
+  const { products } = useProducts();
 
-  const [endorsedItems, setEndorsedItems] = useState<
-    typeof furnitureItems
-  >([]);
+  const [endorsedItems, setEndorsedItems] = useState<typeof products>([]);
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
 
   useEffect(() => {
     const endorsements = getEndorsements();
 
-    const items = furnitureItems.filter((item) => {
-      const endorsement = endorsements[item.id];
+    const items = products.filter((item) => {
+      const endorsement: Endorsement | undefined =
+        endorsements[String(item.id)];
+
       if (!endorsement) return false;
 
-      // endorsement.designer = "Name — Bio"
-      const [name, designerBio] =
-        endorsement.designer.split(" — ");
-
-      if (normalize(name) === designerName) {
-        setDisplayName(name);
-        setBio(designerBio ?? "");
+      if (normalize(endorsement.designerName) === designerName) {
+        setDisplayName(endorsement.designerName);
+        setBio(endorsement.designerBio ?? "");
         return true;
       }
+
       return false;
     });
 
     setEndorsedItems(items);
-  }, [designerName]);
+  }, [designerName, products]);
 
   if (endorsedItems.length === 0) {
     return (
