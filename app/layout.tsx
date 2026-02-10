@@ -4,6 +4,7 @@ import "./globals.css";
 import Nav from "./components/Nav";
 import { CartProvider } from "./context/CartContext";
 import { SavedProvider } from "./context/SavedContext";
+import { ProductProvider } from "./context/ProductContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,12 +32,14 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {/* Global Providers */}
-        <CartProvider>
+        <ProductProvider>
           <SavedProvider>
-            <Nav />
-            {children}
+           <CartProvider>
+              <Nav />
+              {children}
+            </CartProvider>
           </SavedProvider>
-        </CartProvider>
+        </ProductProvider>
       </body>
     </html>
   );

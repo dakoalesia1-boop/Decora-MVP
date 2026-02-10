@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { furnitureItems } from "@/lib/furnitureData";
 import { getEndorsements } from "@/lib/endorsements";
 import { useSaved } from "@/app/context/SavedContext";
+import { useProducts } from "@/app/context/ProductContext";
+import AddProductForm from "./AddProductForm";
 
 export default function SellerDashboard() {
   // 🔑 Prevent hydration mismatch
   const [mounted, setMounted] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -19,9 +21,10 @@ export default function SellerDashboard() {
 
   const endorsements = getEndorsements();
   const { moodboards } = useSaved();
+  const { products } = useProducts();
 
-  // Seller's products
-  const sellerProducts = furnitureItems.filter(
+  // Seller's products (NOW from ProductContext)
+  const sellerProducts = products.filter(
     (item) => item.sellerId === sellerId
   );
 
@@ -81,11 +84,7 @@ export default function SellerDashboard() {
 
         {/* ✅ ADD PRODUCT BUTTON */}
         <button
-          onClick={() =>
-            alert(
-              "Add Product flow coming next (MVP simulation)"
-            )
-          }
+          onClick={() => setShowAddForm(true)}
           style={{
             padding: "12px 18px",
             borderRadius: 12,
@@ -100,6 +99,11 @@ export default function SellerDashboard() {
           + Add Product
         </button>
       </div>
+
+      {/* ✅ ADD PRODUCT FORM */}
+      {showAddForm && (
+        <AddProductForm onClose={() => setShowAddForm(false)} />
+      )}
 
       {/* SUMMARY CARDS */}
       <div

@@ -1,49 +1,57 @@
-import { furnitureItems } from "@/lib/furnitureData";
+"use client";
+
+import { useParams } from "next/navigation";
+import { useProducts } from "@/app/context/ProductContext";
+import { getEndorsements } from "@/lib/endorsements";
 import ItemActions from "./ItemActions";
 
-type PageProps = {
-  params: Promise<{
-    id: string;
-  }>;
-};
+export default function ItemPage() {
+  const { products } = useProducts();
+  const params = useParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
-export default async function ItemPage({ params }: PageProps) {
-  const { id } = await params;
-
-  const item = furnitureItems.find((i) => i.id === id);
+  const item = products.find((p) => String(p.id) === String(id));
 
   if (!item) {
     return (
       <div style={{ padding: 40 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700 }}>
           Item not found
         </h1>
       </div>
     );
   }
 
+  const endorsements = getEndorsements();
+  const endorsement = endorsements[String(item.id)];
+
   return (
-    <div style={{ maxWidth: 1000, margin: "40px auto", padding: 20 }}>
+    <div style={{ maxWidth: 900, margin: "40px auto", padding: 20 }}>
       <img
         src={item.image}
         alt={item.name}
         style={{
           width: "100%",
-          maxHeight: 500,
+          height: 420,
           objectFit: "cover",
           borderRadius: 20,
         }}
       />
 
-      <h1 style={{ fontSize: 32, fontWeight: 700, marginTop: 20 }}>
+      <h1 style={{ fontSize: 32, fontWeight: 800, marginTop: 20 }}>
         {item.name}
       </h1>
 
-      <p style={{ fontSize: 18, marginTop: 8 }}>
+      <p style={{ color: "#6b6b6b", marginTop: 6 }}>
         {item.style} · €{item.price}
       </p>
 
-      {/* ALL interactive + client-only logic lives here */}
+      {endorsement && (
+        <p style={{ marginTop: 8, fontWeight: 600 }}>
+          ✔ Endorsed by {endorsement.designerName}
+        </p>
+      )}
+
       <ItemActions item={item} />
     </div>
   );

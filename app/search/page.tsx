@@ -2,131 +2,184 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { furnitureItems } from "../../lib/furnitureData";
-
-const styles = [
-  "All",
-  "Modern",
-  "Scandinavian",
-  "Minimalist",
-  "Luxury",
-  "Bohemian",
-  "Industrial",
-  "Japandi",
-  "Mid-Century",
-  "Contemporary",
-  "Classic",
-];
-
-const categories = [
-  "All",
-  "Sofa",
-  "Chair",
-  "Table",
-  "Bed",
-  "Storage",
-  "Lighting",
-  "Desk",
-];
+import { useProducts } from "@/app/context/ProductContext";
+import { getEndorsements } from "@/lib/endorsements";
 
 export default function SearchPage() {
-  const [style, setStyle] = useState("All");
-  const [category, setCategory] = useState("All");
-  const [maxPrice, setMaxPrice] = useState(3000);
+  const { products } = useProducts();
+  const endorsements = getEndorsements();
 
-  const filteredItems = furnitureItems.filter((item) => {
-    const styleMatch = style === "All" || item.style === style;
-    const categoryMatch =
-      category === "All" || item.type === category;
+  // Filters
+  const [selectedStyle, setSelectedStyle] = useState<string>("All");
+  const [selectedType, setSelectedType] = useState<string>("All");
+  const [maxPrice, setMaxPrice] = useState<number>(3000);
+
+  // Derive filter options dynamically
+  const styles = ["All", ...Array.from(new Set(products.map(p => p.style)))];
+  const types = ["All", ...Array.from(new Set(products.map(p => p.type)))];
+
+  const filteredProducts = products.filter((item) => {
+    const styleMatch =
+      selectedStyle === "All" || item.style === selectedStyle;
+    const typeMatch =
+      selectedType === "All" || item.type === selectedType;
     const priceMatch = item.price <= maxPrice;
-    return styleMatch && categoryMatch && priceMatch;
+
+    return styleMatch && typeMatch && priceMatch;
   });
 
   return (
-    <div className="min-h-screen bg-[#f8f5f0] p-8">
-      <h1 className="text-3xl font-semibold mb-8 text-[#2f2f2f]">
+    <div
+      style={{
+        padding: 40,
+        minHeight: "100vh",
+        background: "#f8f5f0",
+        color: "#2f2f2f",
+      }}
+    >
+      <h1 style={{ fontSize: 32, fontWeight: 700 }}>
         Search Designs
       </h1>
 
-      {/* Filters */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm mb-10 grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {/* Style */}
+      {/* FILTERS */}
+      <div
+        style={{
+          marginTop: 24,
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: 20,
+          maxWidth: 900,
+        }}
+      >
+        {/* STYLE */}
         <div>
-          <label className="block text-sm mb-2 text-[#3b2f2a] font-medium">
-            Style
-          </label>
+          <label style={{ fontWeight: 600 }}>Style</label>
           <select
-            value={style}
-            onChange={(e) => setStyle(e.target.value)}
-            className="border p-2 rounded-lg w-full text-[#2f2f2f] bg-white"
+            value={selectedStyle}
+            onChange={(e) => setSelectedStyle(e.target.value)}
+            style={selectStyle}
           >
-            {styles.map((s) => (
-              <option key={s}>{s}</option>
+            {styles.map((style) => (
+              <option key={style} value={style}>
+                {style}
+              </option>
             ))}
           </select>
         </div>
 
-        {/* Category */}
+        {/* CATEGORY */}
         <div>
-          <label className="block text-sm mb-2 text-[#3b2f2a] font-medium">
-            Category
-          </label>
+          <label style={{ fontWeight: 600 }}>Category</label>
           <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="border p-2 rounded-lg w-full text-[#2f2f2f] bg-white"
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+            style={selectStyle}
           >
-            {categories.map((c) => (
-              <option key={c}>{c}</option>
+            {types.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
             ))}
           </select>
         </div>
 
-        {/* Budget */}
+        {/* BUDGET */}
         <div>
-          <label className="block text-sm mb-2 text-[#3b2f2a] font-medium">
-            Max Budget:{" "}
-            <span className="font-semibold">${maxPrice}</span>
+          <label style={{ fontWeight: 600 }}>
+            Max Budget: €{maxPrice}
           </label>
           <input
             type="range"
-            min="100"
-            max="3000"
-            step="50"
+            min={0}
+            max={5000}
+            step={50}
             value={maxPrice}
             onChange={(e) => setMaxPrice(Number(e.target.value))}
-            className="w-full accent-[#3b2f2a]"
+            style={{ width: "100%" }}
           />
         </div>
       </div>
 
-      {/* Results */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-        {filteredItems.map((item) => (
-          <Link
-            key={item.id}
-            href={`/item/${item.id}`}
-            className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition"
-          >
-            <img
-              src={item.image}
-              alt={item.name}
-              className="w-full h-48 object-cover"
-            />
-            <div className="p-4">
-              <p className="font-medium text-[#2f2f2f]">
-                {item.name}
-              </p>
-              <p className="text-sm text-[#6b6b6b]">
-                ${item.price}
-              </p>
-              <p className="text-xs text-[#8a8a8a]">
-                {item.style} • {item.type}
-              </p>
-            </div>
-          </Link>
-        ))}
+      {/* RESULTS */}
+      <div
+        style={{
+          marginTop: 36,
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fill, minmax(260px, 1fr))",
+          gap: 24,
+        }}
+      >
+        {filteredProducts.map((item) => {
+          const endorsement = endorsements[item.id];
+
+          return (
+            <Link
+              key={item.id}
+              href={`/item/${item.id}`}
+              style={{
+                position: "relative",
+                background: "white",
+                borderRadius: 16,
+                overflow: "hidden",
+                textDecoration: "none",
+                color: "inherit",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+              }}
+            >
+              {/* DESIGNER BADGE */}
+              {endorsement && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 12,
+                    left: 12,
+                    background: "#f1ede6",
+                    color: "#2f2f2f",
+                    fontSize: 12,
+                    padding: "4px 10px",
+                    borderRadius: 999,
+                    fontWeight: 600,
+                    zIndex: 2,
+                  }}
+                >
+                  ✔ Endorsed by{"endorsment.designerName"}
+                </span>
+              )}
+
+              <img
+                src={item.image}
+                alt={item.name}
+                style={{
+                  width: "100%",
+                  height: 220,
+                  objectFit: "cover",
+                }}
+              />
+
+              <div style={{ padding: 16 }}>
+                <p style={{ fontWeight: 600 }}>
+                  {item.name}
+                </p>
+                <p style={{ color: "#6b6b6b", fontSize: 14 }}>
+                  {item.style} · €{item.price}
+                </p>
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
 }
+
+/* ---------- STYLES ---------- */
+
+const selectStyle: React.CSSProperties = {
+  marginTop: 6,
+  padding: "10px 12px",
+  borderRadius: 10,
+  border: "1px solid #ccc",
+  width: "100%",
+  background: "white",
+};

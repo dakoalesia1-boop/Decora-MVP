@@ -1,32 +1,66 @@
-const KEY = "decora_endorsements";
-
-export type EndorsementMap = {
-  [key: string]: {
-    designer: string;
-    date: string;
-  };
+// lib/endorsements.ts
+export type Endorsement = {
+  designerName: string;
+  designerBio?: string;
+  note?: string;
+  createdAt: number;
 };
 
-export function getEndorsements(): EndorsementMap {
+const KEY = "decora-endorsements";
+
+/**
+ * Stored as:
+ * {
+ *   "item-id-string": { designerName, note, createdAt }
+ * }
+ */
+export function getEndorsements(): Record<string, Endorsement> {
   if (typeof window === "undefined") return {};
-  return JSON.parse(localStorage.getItem(KEY) || "{}");
+  try {
+    const raw = localStorage.getItem(KEY);
+    return raw ? (JSON.parse(raw) as Record<string, Endorsement>) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function setEndorsements(next: Record<string, Endorsement>) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(KEY, JSON.stringify(next));
+}
+
+export function isEndorsed(itemId: string): boolean {
+  const all = getEndorsements();
+  return Boolean(all[itemId]);
+}
+
+export function endorseItem(
+  itemId: string,
+  payload: Omit<Endorsement, "createdAt">
+) {
+  const all = getEndorsements();
+  all[itemId] = { ...payload, createdAt: Date.now() };
+  setEndorsements(all);
+  return all;
+}
+
+export function removeEndorsement(itemId: string) {
+  const all = getEndorsements();
+  delete all[itemId];
+  setEndorsements(all);
+  return all;
 }
 
 export function toggleEndorsement(
   itemId: string,
-  designer: string
-): EndorsementMap {
-  const current = getEndorsements();
-
-  if (current[itemId]) {
-    delete current[itemId];
+  payload: Omit<Endorsement, "createdAt">
+) {
+  const all = getEndorsements();
+  if (all[itemId]) {
+    delete all[itemId];
   } else {
-    current[itemId] = {
-      designer,
-      date: new Date().toISOString(),
-    };
+    all[itemId] = { ...payload, createdAt: Date.now() };
   }
-
-  localStorage.setItem(KEY, JSON.stringify(current));
-  return current;
+  setEndorsements(all);
+  return all;
 }

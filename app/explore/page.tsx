@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { furnitureItems } from "@/lib/furnitureData";
+import { useProducts } from "@/app/context/ProductContext";
 import { getEndorsements } from "@/lib/endorsements";
 
 export default function ExplorePage() {
+  const { products } = useProducts();
   const endorsements = getEndorsements();
 
   return (
@@ -29,7 +30,7 @@ export default function ExplorePage() {
           gap: 24,
         }}
       >
-        {furnitureItems.map((item) => {
+        {products.map((item) => {
           const endorsement = endorsements[item.id];
 
           return (
@@ -46,7 +47,7 @@ export default function ExplorePage() {
                 boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
               }}
             >
-              {/* ✅ CONDITIONAL DESIGNER BADGE */}
+              {/* Designer badge only if real endorsement exists */}
               {endorsement && (
                 <span
                   style={{
@@ -62,8 +63,7 @@ export default function ExplorePage() {
                     zIndex: 2,
                   }}
                 >
-                  ✔ Endorsed by{" "}
-                  {endorsement.designer.split(" — ")[0]}
+                  ✔ Endorsed by {endorsement.designerName}
                 </span>
               )}
 
